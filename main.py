@@ -10,13 +10,16 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from scipy import fftpack
 
-from core import acquire
+from core import Acquire
 from peakdetect import peakdetect
 from settings import settingsInit
 
 
 class Window(QtGui.QMainWindow):
     """Main window class"""
+    sc = None
+    fc = None
+
     def __init__(self):
         """Calls all needed inits"""
         super(Window, self).__init__()
@@ -29,10 +32,10 @@ class Window(QtGui.QMainWindow):
         self.main_widget = QtGui.QWidget(self)
 
         l = QtGui.QVBoxLayout(self.main_widget)
-        sc = SignalCanvas(self.main_widget, width=5, height=4, dpi=100)
-        fc = FFTCanvas(self.main_widget, width=5, height=4, dpi=100)
-        l.addWidget(sc)
-        l.addWidget(fc)
+        self.sc = SignalCanvas(self.main_widget, width=5, height=4, dpi=100)
+        self.fc = FFTCanvas(self.main_widget, width=5, height=4, dpi=100)
+        l.addWidget(self.sc)
+        l.addWidget(self.fc)
         
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
@@ -47,8 +50,10 @@ class Window(QtGui.QMainWindow):
         acquireAction = QtGui.QAction(
                         QtGui.QIcon('images/icon_play.png'), 'Acquire', self)
         acquireAction.setShortcut('Ctrl+S')
-        acquireAction.triggered.connect(sc.update_figure)
-        acquireAction.triggered.connect(fc.update_figure)
+        acquireAction.triggered.connect(self.start_acquire)
+        #acquireAction.triggered.connect(sc.update_figure)
+        #acquireAction.triggered.connect(fc.update_figure)
+
         """Acquire button"""
         
         self.toolbar = self.addToolBar('Menu')
@@ -61,6 +66,13 @@ class Window(QtGui.QMainWindow):
         """Window parameters"""
 
         self.show()
+
+    def start_acquire(self):
+        """Creates Acquire instance"""
+        acq = Acquire()
+        QtCore.QObject.connect(acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.sc.update_figure)
+        QtCore.QObject.connect(acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.fc.update_figure)
+        acq.start()
 
 
 class MyMplCanvas(FigureCanvas):
@@ -87,22 +99,20 @@ class MyMplCanvas(FigureCanvas):
 class SignalCanvas(MyMplCanvas):
     """A canvas for signal plot."""
 
-    def update_figure(self):
+    def update_figure(self, output):
         print "Signal update called"
-        y = acquire(samples=1000, delete=False)
-        self.axes.plot(range(1000), y, 'r')
+        self.axes.plot(range(1000), output, 'r')
         self.draw()
 
 
 class FFTCanvas(MyMplCanvas):
     """A canvas for signal plot."""
 
-    def update_figure(self):
+    def update_figure(self, output):
         print "FFT update called"
 
-        y = acquire(samples=1000, delete=True)
-        fftX = fftpack.fftfreq(len(y), d=0.1)
-        fftY = fftpack.rfft(y)
+        fftX = fftpack.fftfreq(len(output), d=0.1)
+        fftY = fftpack.rfft(output)
 
         _max, _min = peakdetect(fftY, fftX, 500, 0.30)
         xm = [p[0] for p in _max]
