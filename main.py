@@ -101,7 +101,7 @@ class SignalCanvas(MyMplCanvas):
 
     def update_figure(self, output):
         print "Signal update called"
-        self.axes.plot(range(1000), output, 'r')
+        self.axes.plot(range(len(output)), output, 'r')
         self.draw()
 
 
@@ -110,20 +110,21 @@ class FFTCanvas(MyMplCanvas):
 
     def update_figure(self, output):
         print "FFT update called"
+	
+	fftX = fftpack.fftfreq(len(output), d=0.1)
+        fftY = fftpack.fft(output)
 
-        fftX = fftpack.fftfreq(len(output), d=0.1)
-        fftY = fftpack.rfft(output)
-
-        _max, _min = peakdetect(fftY, fftX, 500, 0.30)
+        """_max, _min = peakdetect(fftY, fftX, 500, 0.30)
         xm = [p[0] for p in _max]
         ym = [abs(p[1]) for p in _max]
         xn = [p[0] for p in _min]
         yn = [abs(p[1]) for p in _min]
 
-        self.axes.hold(True)
-        self.axes.bar(xm, ym, 0.02, color='r')
-        self.axes.bar(xn, yn, 0.02, color='y')
-        #self.axes.plot(xn, yn, 'r')
+	xm += xn
+	ym += yn
+        self.axes.bar(xm, ym, 0.02, color='r')"""
+        #self.axes.bar(xn, yn, 0.02, color='y')
+        self.axes.plot(fftX, abs(fftY), 'r')
 
         self.draw()
 

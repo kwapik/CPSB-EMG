@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import time
 from struct import *
 
 from PyQt4 import QtCore
@@ -21,7 +22,7 @@ class Acquire(QtCore.QObject):
 
     def acquire(self):
         print "acquire function called"
-        acquireSource = 'exampleInput'
+        acquireSource = '/dev/rfcomm0'
         print 'Acquire started from ' + acquireSource
         file = open(acquireSource, 'r')
     
@@ -30,6 +31,8 @@ class Acquire(QtCore.QObject):
         for i in range(samples):
             value = file.readline()
             while not value:
+		print "I'm here!"
+		time.sleep(0.0001)
                 value = file.readline()
             """Reading data"""
             value = value[:-1]
@@ -42,6 +45,7 @@ class Acquire(QtCore.QObject):
                 output.append(number[0])
                 #print number[0]
             except error:
-                print 'Wrong number'
+                pass
+		#print 'Wrong number'
         print "Sending signal with", len(output), "probes."
         self.emit(QtCore.SIGNAL('update_plots(PyQt_PyObject)'), output)
