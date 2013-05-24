@@ -19,6 +19,7 @@ class Window(QtGui.QMainWindow):
     """Main window class"""
     sc = None
     fc = None
+    acq = None
 
     def __init__(self):
         """Calls all needed inits"""
@@ -53,12 +54,18 @@ class Window(QtGui.QMainWindow):
         acquireAction.triggered.connect(self.start_acquire)
         #acquireAction.triggered.connect(sc.update_figure)
         #acquireAction.triggered.connect(fc.update_figure)
-
         """Acquire button"""
+
+        stopacquireAction = QtGui.QAction(
+                        QtGui.QIcon('images/icon_stop.png'), 'Stop', self)
+        stopacquireAction.setShortcut('Ctrl+Q')
+        stopacquireAction.triggered.connect(self.stop_acquire)
+	"""Stop acquire button"""
         
         self.toolbar = self.addToolBar('Menu')
         self.toolbar.addAction(exitAction)
         self.toolbar.addAction(acquireAction)
+        self.toolbar.addAction(stopacquireAction)
         """Creating toolbar"""
 
         #self.setGeometry(300, 300, 250, 150)
@@ -69,10 +76,15 @@ class Window(QtGui.QMainWindow):
 
     def start_acquire(self):
         """Creates Acquire instance"""
-        acq = Acquire()
-        QtCore.QObject.connect(acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.sc.update_figure)
-        QtCore.QObject.connect(acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.fc.update_figure)
-        acq.start()
+        self.acq = Acquire()
+        QtCore.QObject.connect(self.acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.sc.update_figure)
+        QtCore.QObject.connect(self.acq, QtCore.SIGNAL('update_plots(PyQt_PyObject)'), self.fc.update_figure)
+        self.acq.start()
+    
+    def stop_acquire(self):
+        """Deletes Acquire instance"""
+	print "Stop acquite called"
+	self.acq = None
 
 
 class MyMplCanvas(FigureCanvas):
